@@ -1,12 +1,11 @@
 # Do Games Respect Your Time?
 
-**A confidence-aware, research-grade analysis of time value in video games**
 
 ## The Insight
 
 **37% of perceived game length is statistical noise.**
 
-When you account for how many players actually reported completion times, games are dramatically shorter than they appear. Most platforms show you raw averages — we show you confidence-weighted truth.
+When you account for how many players actually reported completion times, games are dramatically shorter than they appear. Most platforms show you raw averages,this project show you confidence-weighted truth.
 
 ## What Makes This Different
 
@@ -33,7 +32,7 @@ This isn't a dashboard. It's data journalism.
 - `viz_engine.py` — Editorial-quality visualization engine
 - `Do_Games_Respect_Your_Time.ipynb` — Publication-ready notebook
 - `analysis.py` — Standalone script (generates HTML visualizations)
-- `hltb_dataset.csv` — Source data (HowLongToBeat)
+- `hltb_dataset.csv` — Source data ([HowLongToBeat](https://www.kaggle.com/datasets/b4n4n4p0wer/how-long-to-beat-video-game-playtime-dataset/))
 
 ## Run It
 
@@ -71,42 +70,3 @@ python3 analysis.py
 **Adjusted Time Cost:** `time / confidence`  
 **Misrepresentation Risk:** `1 / confidence`  
 **Sample:** 39,514 games (after 1% outlier removal)
-
-No black-box cleaning. Every filter documented.
-
-## The Question
-
-When uncertainty in reported completion time is explicitly modeled, which games and genres truly respect player time — and which only appear to do so?
-
-## The Answer
-
-Most games don't disrespect your time by being long.  
-They disrespect it by being **unmeasured**.
-
----
-
-## What Beats Power BI
-
-✓ **Original metrics** — Confidence-adjusted time cost  
-✓ **Distribution-first** — Medians, not means  
-✓ **Counterfactual reasoning** — Raw vs adjusted comparison  
-✓ **Editorial storytelling** — Narrative flow, not dashboard grids  
-✓ **Sensitivity analysis** — How insights change with thresholds  
-✓ **One memorable insight** — 37% is noise  
-
-**This is research-grade data journalism, not business reporting.**
-
----
-
-## Competition Readiness
-
-**Target Awards:**
-- 🏆 Best Storyteller (narrative flow + editorial design)
-- 🏆 Best Visualization (annotated, insight-driven charts)
-- 🏆 Sherlock "Aha" Moment (37% noise insight)
-
-**Quality Bar:**
-- Top 0.1% analytical depth
-- Publication-ready visuals
-- Zero filler content
-- Every interaction changes interpretation

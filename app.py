@@ -1,6 +1,5 @@
 """
 Do Games Respect Your Time?
-A research-backed argument about uncertainty in game completion data
 
 This is not a dashboard. This is visual reasoning.
 """
@@ -166,7 +165,7 @@ insight = analyzer.get_core_insight()
 # ============================================================================
 
 st.markdown('<h1 class="main-title">Do Games Respect Your Time?</h1>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle">A research-backed argument about uncertainty in game completion data</p>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle">An analysis of uncertainty in game completion data</p>', unsafe_allow_html=True)
 
 st.markdown("""
 <div class="narrative">
@@ -338,11 +337,19 @@ st.markdown("""
 Two dimensions can't capture the full truth. What follows is a journey through five 3D spaces, 
 each revealing patterns <strong>impossible to see in 2D</strong>.
 
-Rotate. Explore. Watch the hidden structure emerge.
+<em>💡 Tip: Drag to rotate • Scroll to zoom • Scroll outside chart to navigate page</em>
 </div>
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="section-break"></div>', unsafe_allow_html=True)
+
+# Config for 3D charts - full interactivity
+plotly_3d_config = {
+    'scrollZoom': True,
+    'displayModeBar': True,
+    'responsive': True,
+    'displaylogo': False
+}
 
 # ============================================================================
 # 3D #1: TRUST-TIME-STABILITY LANDSCAPE
@@ -361,9 +368,11 @@ Most "epics" float in unstable territory. The few verified epics form a tiny, is
 </div>
 """, unsafe_allow_html=True)
 
-fig_3d_1 = trust_time_stability_3d(analyzer.df)
-st.plotly_chart(fig_3d_1, use_container_width=True)
+with st.container():
+    fig_3d_1 = trust_time_stability_3d(analyzer.df)
+    st.plotly_chart(fig_3d_1, use_container_width=True, config=plotly_3d_config)
 
+st.markdown("---")
 st.markdown('<div class="section-break"></div>', unsafe_allow_html=True)
 
 # ============================================================================
@@ -384,9 +393,11 @@ The gold diamond marks the most honest genre. The red X marks the most misleadin
 </div>
 """, unsafe_allow_html=True)
 
-fig_3d_2 = genre_honesty_orbit_3d(analyzer.df)
-st.plotly_chart(fig_3d_2, use_container_width=True)
+with st.container():
+    fig_3d_2 = genre_honesty_orbit_3d(analyzer.df)
+    st.plotly_chart(fig_3d_2, use_container_width=True, config=plotly_3d_config)
 
+st.markdown("---")
 st.markdown('<div class="section-break"></div>', unsafe_allow_html=True)
 
 # ============================================================================
@@ -406,9 +417,11 @@ The cube reveals <strong>platform-specific patterns</strong> invisible in aggreg
 </div>
 """, unsafe_allow_html=True)
 
-fig_3d_3 = platform_reliability_cube_3d(analyzer.df)
-st.plotly_chart(fig_3d_3, use_container_width=True)
+with st.container():
+    fig_3d_3 = platform_reliability_cube_3d(analyzer.df)
+    st.plotly_chart(fig_3d_3, use_container_width=True, config=plotly_3d_config)
 
+st.markdown("---")
 st.markdown('<div class="section-break"></div>', unsafe_allow_html=True)
 
 # ============================================================================
@@ -428,9 +441,11 @@ Avoid the danger zone. Trust the low-Z cluster.
 </div>
 """, unsafe_allow_html=True)
 
-fig_3d_4 = misrepresentation_risk_helix_3d(analyzer.df)
-st.plotly_chart(fig_3d_4, use_container_width=True)
+with st.container():
+    fig_3d_4 = misrepresentation_risk_helix_3d(analyzer.df)
+    st.plotly_chart(fig_3d_4, use_container_width=True, config=plotly_3d_config)
 
+st.markdown("---")
 st.markdown('<div class="section-break"></div>', unsafe_allow_html=True)
 
 # ============================================================================
@@ -453,8 +468,11 @@ The structure is invisible in 2D. In 3D, it's unmistakable.
 </div>
 """, unsafe_allow_html=True)
 
-fig_3d_5 = hidden_gems_cluster_3d(analyzer.df)
-st.plotly_chart(fig_3d_5, use_container_width=True)
+with st.container():
+    fig_3d_5 = hidden_gems_cluster_3d(analyzer.df)
+    st.plotly_chart(fig_3d_5, use_container_width=True, config=plotly_3d_config)
+
+st.markdown("---")
 
 st.markdown("""
 <div class="narrative">
