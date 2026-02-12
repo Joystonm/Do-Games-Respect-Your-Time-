@@ -146,7 +146,33 @@ st.markdown("""
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(230, 57, 70, 0.3);
     }
-</style>
+    
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes slideInLeft {
+        from { opacity: 0; transform: translateX(-30px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    
+    .main-title { animation: fadeInUp 0.6s ease-out; }
+    .subtitle { animation: fadeInUp 0.8s ease-out; }
+    .insight-box { animation: fadeInUp 0.7s ease-out; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .insight-box:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(230, 57, 70, 0.4); }
+    .narrative { animation: fadeIn 0.8s ease-out; }
+    .stat-hero { animation: fadeInUp 0.6s ease-out; transition: transform 0.3s ease; }
+    .stat-hero:hover { transform: translateY(-8px); }
+    .section-header { animation: slideInLeft 0.6s ease-out; }
+    .conclusion-box { animation: fadeInUp 0.7s ease-out; }
+    html { scroll-behavior: smooth; }
+    [data-testid="stDataFrame"] { animation: fadeIn 0.6s ease-out; }</style>
 """, unsafe_allow_html=True)
 
 # Load data
