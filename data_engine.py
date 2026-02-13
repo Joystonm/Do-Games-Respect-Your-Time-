@@ -74,6 +74,18 @@ class TimeRespectAnalyzer:
         # Genre normalization
         df['primary_genre'] = df['genres'].fillna('Unknown').str.split(',').str[0].str.strip()
         
+        # Time Respect Score (TRS)
+        genre_medians = df.groupby('primary_genre')['time_cost'].median()
+        df['genre_median'] = df['primary_genre'].map(genre_medians)
+        df['length_penalty'] = np.exp(-df['time_cost'] / 30)
+        df['confidence_reward'] = df['confidence_score'] / df['confidence_score'].max()
+        df['genre_deviation'] = 1 / (1 + np.abs(df['time_cost'] - df['genre_median']) / df['genre_median'])
+        df['time_respect_score'] = (
+            0.4 * df['length_penalty'] +
+            0.4 * df['confidence_reward'] +
+            0.2 * df['genre_deviation']
+        )
+        
         self.df = df
     
     def get_core_insight(self) -> Dict:
@@ -189,3 +201,43 @@ class TimeRespectAnalyzer:
         illusion = illusion.nlargest(top_n, 'perception_gap')
         return illusion[['name', 'time_cost', 'adjusted_time_cost', 'main_story_polled', 
                         'perception_gap', 'primary_genre', 'zone']]
+    
+    def compute_time_respect_score(self):
+        """Time Respect Score (TRS) - penalizes length, rewards confidence, normalizes by genre"""
+        df = self.df
+        
+        # Genre median time (expectation)
+        genre_medians = df.groupby('primary_genre')['time_cost'].median()
+        df['genre_median'] = df['primary_genre'].map(genre_medians)
+        
+        # Length penalty (exponential decay for extreme length)
+        df['length_penalty'] = np.exp(-df['time_cost'] / 30)
+        
+        # Confidence reward (log-scaled)
+        df['confidence_reward'] = df['confidence_score'] / df['confidence_score'].max()
+        
+        # Genre deviation (penalize games much longer than genre norm)
+        df['genre_deviation'] = 1 / (1 + np.abs(df['time_cost'] - df['genre_median']) / df['genre_median'])
+        
+        # TRS formula: weighted combination
+        df['time_respect_score'] = (
+            0.4 * df['length_penalty'] +
+            0.4 * df['confidence_reward'] +
+            0.2 * df['genre_deviation']
+        )
+        
+        self.df = df
+    
+    def get_trs_leaderboard(self, top_n: int = 10, bottom_n: int = 10) -> tuple:
+        """Get top and bottom games by Time Respect Score"""
+        top = self.df.nlargest(top_n, 'time_respect_score')[
+            ['name', 'time_cost', 'main_story_polled', 'confidence_score', 
+             'primary_genre', 'time_respect_score']
+        ].copy()
+        
+        bottom = self.df.nsmallest(bottom_n, 'time_respect_score')[
+            ['name', 'time_cost', 'main_story_polled', 'confidence_score', 
+             'primary_genre', 'time_respect_score']
+        ].copy()
+        
+        return top, bottom

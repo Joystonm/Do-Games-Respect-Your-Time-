@@ -9,7 +9,7 @@ import numpy as np
 from data_engine import TimeRespectAnalyzer
 from viz_engine import (
     trust_time_landscape, perception_reality_split, genre_honesty_ranking,
-    sensitivity_proof, confidence_crisis_histogram, PALETTE
+    sensitivity_proof, confidence_crisis_histogram, trs_leaderboard, PALETTE
 )
 from viz_3d_advanced import (
     trust_time_stability_3d, genre_honesty_orbit_3d, platform_reliability_cube_3d,
@@ -534,6 +534,67 @@ st.plotly_chart(fig_sensitivity, use_container_width=True, config={'displayModeB
 st.markdown('<div class="section-break"></div>', unsafe_allow_html=True)
 
 # ============================================================================
+# ============================================================================
+# TIME RESPECT SCORE LEADERBOARD
+# ============================================================================
+
+st.markdown('<h2 class="section-header">⏱️ Time Respect Score Leaderboard</h2>', unsafe_allow_html=True)
+
+st.markdown("""
+<div class="narrative">
+<strong>Which games respect your time?</strong>
+
+Time Respect Score (TRS) combines three factors:
+
+• <strong>Length penalty</strong> — Shorter games score higher  
+• <strong>Confidence reward</strong> — Well-measured games score higher  
+• <strong>Genre fit</strong> — Games close to genre norms score higher  
+
+The formula: <code>TRS = 0.4×Length + 0.4×Confidence + 0.2×Genre</code>
+<br><br>
+Rankings reveal truth. The best games are short, confident, and honest. The worst are long, uncertain, and outliers.
+</div>
+""", unsafe_allow_html=True)
+
+top_games, bottom_games = analyzer.get_trs_leaderboard(top_n=10, bottom_n=10)
+fig_trs = trs_leaderboard(top_games, bottom_games)
+st.plotly_chart(fig_trs, use_container_width=True, config={'displayModeBar': False})
+
+# Show detailed tables
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown("**🏆 Top 10 Details:**")
+    display_top = top_games[['name', 'time_cost', 'main_story_polled', 'time_respect_score']].copy()
+    display_top.columns = ['Game', 'Hours', 'Polls', 'TRS']
+    display_top['TRS'] = display_top['TRS'].round(3)
+    display_top['Hours'] = display_top['Hours'].round(1)
+    st.dataframe(display_top, use_container_width=True, hide_index=True)
+
+with col2:
+    st.markdown("**⚠️ Bottom 10 Details:**")
+    display_bottom = bottom_games[['name', 'time_cost', 'main_story_polled', 'time_respect_score']].copy()
+    display_bottom.columns = ['Game', 'Hours', 'Polls', 'TRS']
+    display_bottom['TRS'] = display_bottom['TRS'].round(3)
+    display_bottom['Hours'] = display_bottom['Hours'].round(1)
+    st.dataframe(display_bottom, use_container_width=True, hide_index=True)
+
+st.markdown("""
+<div class="narrative">
+<strong>Key insight:</strong> The top games average <strong>{:.1f} hours</strong> with <strong>{:.0f} polls</strong>. 
+The bottom games average <strong>{:.1f} hours</strong> with <strong>{:.0f} polls</strong>.
+
+Time respect isn't just about being short — it's about being <em>measurably efficient</em>.
+</div>
+""".format(
+    top_games['time_cost'].mean(),
+    top_games['main_story_polled'].mean(),
+    bottom_games['time_cost'].mean(),
+    bottom_games['main_story_polled'].mean()
+), unsafe_allow_html=True)
+
+st.markdown('<div class="section-break"></div>', unsafe_allow_html=True)
+
 # INTERACTIVE EXPLORATION (MINIMAL)
 # ============================================================================
 

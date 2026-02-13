@@ -21,9 +21,10 @@ This isn't a dashboard. It's data journalism.
 
 1. **Trust-Time Map** — The hero chart. Where confidence meets completion time.
 2. **Genre Reliability Ranking** — How rankings shift when confidence is modeled.
-3. **Illusion of Length** — Games that seem longer than they are.
-4. **Sensitivity Analysis** — How insights stabilize with more data.
-5. **Confidence Distribution** — The crisis of unreliable estimates.
+3. **Time Respect Score Leaderboard** — Top 10 most respectful games vs bottom 10 time wasters.
+4. **Illusion of Length** — Games that seem longer than they are.
+5. **Sensitivity Analysis** — How insights stabilize with more data.
+6. **Confidence Distribution** — The crisis of unreliable estimates.
 
 ## Files
 
@@ -63,10 +64,12 @@ python3 analysis.py
 - Misrepresentation risk indicator
 - Sensitivity analysis across thresholds
 - Genre-level rank shift detection
+- **Time Respect Score (TRS)** — Composite metric combining length, confidence, and genre fit
 
 ## Methodology
 
 **Confidence Score:** `log(polls + 1)`  
 **Adjusted Time Cost:** `time / confidence`  
 **Misrepresentation Risk:** `1 / confidence`  
+**Time Respect Score:** `0.4×Length Penalty + 0.4×Confidence + 0.2×Genre Fit`  
 **Sample:** 39,514 games (after 1% outlier removal)

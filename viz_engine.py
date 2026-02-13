@@ -209,6 +209,81 @@ def genre_honesty_ranking(genre_stats: pd.DataFrame) -> go.Figure:
     
     return fig
 
+def trs_leaderboard(top_df: pd.DataFrame, bottom_df: pd.DataFrame) -> go.Figure:
+    """
+    THE LEADERBOARD VISUAL
+    Top 10 Most Respectful vs Bottom 10 Time Wasters
+    """
+    fig = make_subplots(
+        rows=1, cols=2,
+        subplot_titles=("🏆 Most Respectful Games", "⚠️ Biggest Time Wasters"),
+        horizontal_spacing=0.15
+    )
+    
+    # LEFT: Top 10 (reversed for top-down display)
+    top_sorted = top_df.sort_values('time_respect_score', ascending=True)
+    fig.add_trace(go.Bar(
+        y=top_sorted['name'],
+        x=top_sorted['time_respect_score'],
+        orientation='h',
+        marker=dict(
+            color=top_sorted['time_respect_score'],
+            colorscale=[[0, PALETTE['verified']], [1, PALETTE['earned']]],
+            showscale=False
+        ),
+        text=top_sorted['time_respect_score'].round(3),
+        textposition='outside',
+        textfont=dict(size=10, color=PALETTE['text'], family="Inter", weight=600),
+        customdata=top_sorted[['time_cost', 'main_story_polled', 'primary_genre']],
+        hovertemplate='<b>%{y}</b><br>' +
+                      'TRS: %{x:.3f}<br>' +
+                      'Hours: %{customdata[0]:.1f}<br>' +
+                      'Polls: %{customdata[1]}<br>' +
+                      'Genre: %{customdata[2]}<extra></extra>',
+        showlegend=False
+    ), row=1, col=1)
+    
+    # RIGHT: Bottom 10 (reversed for top-down display)
+    bottom_sorted = bottom_df.sort_values('time_respect_score', ascending=False)
+    fig.add_trace(go.Bar(
+        y=bottom_sorted['name'],
+        x=bottom_sorted['time_respect_score'],
+        orientation='h',
+        marker=dict(
+            color=bottom_sorted['time_respect_score'],
+            colorscale=[[0, PALETTE['accent']], [1, PALETTE['uncertain']]],
+            showscale=False
+        ),
+        text=bottom_sorted['time_respect_score'].round(3),
+        textposition='outside',
+        textfont=dict(size=10, color=PALETTE['text'], family="Inter", weight=600),
+        customdata=bottom_sorted[['time_cost', 'main_story_polled', 'primary_genre']],
+        hovertemplate='<b>%{y}</b><br>' +
+                      'TRS: %{x:.3f}<br>' +
+                      'Hours: %{customdata[0]:.1f}<br>' +
+                      'Polls: %{customdata[1]}<br>' +
+                      'Genre: %{customdata[2]}<extra></extra>',
+        showlegend=False
+    ), row=1, col=2)
+    
+    fig.update_layout(
+        title=dict(
+            text="<b>Time Respect Score Leaderboard</b><br>" +
+                 "<sub>TRS = 0.4×Length Penalty + 0.4×Confidence + 0.2×Genre Fit</sub>",
+            font=dict(size=24, color=PALETTE['text'], family="Inter")
+        ),
+        height=700,
+        font=dict(size=11, family="Inter"),
+        plot_bgcolor=PALETTE['bg'],
+        showlegend=False
+    )
+    
+    fig.update_xaxes(title_text="Time Respect Score", gridcolor='rgba(0,0,0,0.05)', row=1, col=1)
+    fig.update_xaxes(title_text="Time Respect Score", gridcolor='rgba(0,0,0,0.05)', row=1, col=2)
+    fig.update_yaxes(showgrid=False)
+    
+    return fig
+
 def sensitivity_proof(sensitivity_df: pd.DataFrame) -> go.Figure:
     """
     THE ROBUSTNESS VISUAL
@@ -297,7 +372,7 @@ def confidence_crisis_histogram(df: pd.DataFrame) -> go.Figure:
     
     return fig
 
-def trust_time_stability_3d(df: pd.DataFrame, sample_size: int = 5000) -> go.Figure:
+def hidden_gems_cluster_3d(df: pd.DataFrame, sample_size: int = 5000) -> go.Figure:
     """
     THE 3D SIGNATURE VISUAL
     Reveals hidden patterns in trust-time-stability space
