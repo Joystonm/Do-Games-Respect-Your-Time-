@@ -7,15 +7,17 @@ from plotly.subplots import make_subplots
 import numpy as np
 import pandas as pd
 
-# Editorial palette (semantic meaning)
+# Professional vibrant palette
 PALETTE = {
-    'earned': '#2A9D8F',      # Trustworthy, short
-    'uncertain': '#E76F51',    # Long but unreliable
-    'false_epic': '#F4A261',   # Statistical illusion
-    'verified': '#264653',     # Long and trustworthy
-    'bg': '#F8F9FA',
-    'text': '#1A1A1A',
-    'accent': '#E63946'
+    'earned': '#00D9A3',      # Vibrant teal - Trustworthy, short
+    'uncertain': '#FF6B6B',    # Coral red - Long but unreliable
+    'false_epic': '#FFB84D',   # Golden orange - Statistical illusion
+    'verified': '#4A90E2',     # Royal blue - Long and trustworthy
+    'bg': '#FAFBFC',
+    'text': '#2C3E50',
+    'accent': '#9B59B6',       # Purple accent
+    'gradient_start': '#667EEA',
+    'gradient_end': '#F093FB'
 }
 
 def trust_time_landscape(df: pd.DataFrame, sample_size: int = 8000) -> go.Figure:
@@ -29,13 +31,13 @@ def trust_time_landscape(df: pd.DataFrame, sample_size: int = 8000) -> go.Figure
     
     # Zone backgrounds (visual reasoning)
     fig.add_shape(type="rect", x0=0, y0=3.5, x1=15, y1=6,
-                  fillcolor=PALETTE['earned'], opacity=0.1, line_width=0)
+                  fillcolor=PALETTE['earned'], opacity=0.15, line_width=0)
     
     fig.add_shape(type="rect", x0=30, y0=0, x1=100, y1=2.5,
-                  fillcolor=PALETTE['uncertain'], opacity=0.1, line_width=0)
+                  fillcolor=PALETTE['uncertain'], opacity=0.15, line_width=0)
     
     fig.add_shape(type="rect", x0=50, y0=0, x1=100, y1=2.0,
-                  fillcolor=PALETTE['false_epic'], opacity=0.15, line_width=0)
+                  fillcolor=PALETTE['false_epic'], opacity=0.2, line_width=0)
     
     # Scatter by zone
     for zone, color in [('Earned Time', PALETTE['earned']),
@@ -52,8 +54,8 @@ def trust_time_landscape(df: pd.DataFrame, sample_size: int = 8000) -> go.Figure
                 marker=dict(
                     size=np.sqrt(zone_data['main_story_polled']) * 0.6,
                     color=color,
-                    opacity=0.6,
-                    line=dict(width=0.5, color='white')
+                    opacity=0.75,
+                    line=dict(width=1, color='white')
                 ),
                 text=zone_data['name'],
                 customdata=zone_data[['main_story_polled', 'misrep_risk']],
@@ -125,10 +127,15 @@ def perception_reality_split(df: pd.DataFrame, genre_stats: pd.DataFrame) -> go.
         y=top_genres['primary_genre'],
         x=top_genres['raw_median'],
         orientation='h',
-        marker=dict(color='lightgray', opacity=0.7),
+        marker=dict(
+            color=top_genres['raw_median'],
+            colorscale=[[0, '#E8E8E8'], [1, '#B0B0B0']],
+            opacity=0.8,
+            line=dict(width=1, color='white')
+        ),
         text=top_genres['raw_median'].round(1),
         textposition='outside',
-        textfont=dict(size=11, color=PALETTE['text']),
+        textfont=dict(size=11, color=PALETTE['text'], family="Inter", weight=600),
         showlegend=False,
         hovertemplate='%{y}<br>%{x:.1f} hours<extra></extra>'
     ), row=1, col=1)
@@ -141,7 +148,7 @@ def perception_reality_split(df: pd.DataFrame, genre_stats: pd.DataFrame) -> go.
         y=top_genres['primary_genre'],
         x=top_genres['adjusted_median'],
         orientation='h',
-        marker=dict(color=colors),
+        marker=dict(color=colors, line=dict(width=1, color='white')),
         text=top_genres['adjusted_median'].round(1),
         textposition='outside',
         textfont=dict(size=11, color=PALETTE['text'], family="Inter", weight=600),
@@ -182,13 +189,13 @@ def genre_honesty_ranking(genre_stats: pd.DataFrame) -> go.Figure:
         orientation='h',
         marker=dict(
             color=top['honesty_score'],
-            colorscale=[[0, PALETTE['uncertain']], [0.5, PALETTE['verified']], [1, PALETTE['earned']]],
+            colorscale=[[0, PALETTE['uncertain']], [0.5, PALETTE['accent']], [1, PALETTE['earned']]],
             showscale=True,
-            colorbar=dict(title="Honesty", thickness=15, len=0.7)
+            colorbar=dict(title="Honesty", thickness=20, len=0.7, outlinewidth=1, outlinecolor=PALETTE['text'])
         ),
         text=top['honesty_score'].round(2),
         textposition='outside',
-        textfont=dict(size=11, color=PALETTE['text']),
+        textfont=dict(size=11, color=PALETTE['text'], family="Inter", weight=600),
         hovertemplate='<b>%{y}</b><br>Honesty: %{x:.2f}<extra></extra>'
     ))
     
@@ -228,8 +235,9 @@ def trs_leaderboard(top_df: pd.DataFrame, bottom_df: pd.DataFrame) -> go.Figure:
         orientation='h',
         marker=dict(
             color=top_sorted['time_respect_score'],
-            colorscale=[[0, PALETTE['verified']], [1, PALETTE['earned']]],
-            showscale=False
+            colorscale=[[0, PALETTE['verified']], [0.5, PALETTE['accent']], [1, PALETTE['earned']]],
+            showscale=False,
+            line=dict(width=1, color='white')
         ),
         text=top_sorted['time_respect_score'].round(3),
         textposition='outside',
@@ -251,8 +259,9 @@ def trs_leaderboard(top_df: pd.DataFrame, bottom_df: pd.DataFrame) -> go.Figure:
         orientation='h',
         marker=dict(
             color=bottom_sorted['time_respect_score'],
-            colorscale=[[0, PALETTE['accent']], [1, PALETTE['uncertain']]],
-            showscale=False
+            colorscale=[[0, '#D32F2F'], [0.5, PALETTE['uncertain']], [1, PALETTE['false_epic']]],
+            showscale=False,
+            line=dict(width=1, color='white')
         ),
         text=bottom_sorted['time_respect_score'].round(3),
         textposition='outside',
@@ -297,9 +306,11 @@ def sensitivity_proof(sensitivity_df: pd.DataFrame) -> go.Figure:
         y=sensitivity_df['gap'],
         mode='lines+markers',
         name='Perception Gap',
-        line=dict(color=PALETTE['accent'], width=4),
-        marker=dict(size=12, symbol='diamond'),
-        hovertemplate='Threshold: %{x} polls<br>Gap: %{y:.1f} hours<extra></extra>'
+        line=dict(color=PALETTE['accent'], width=5, shape='spline'),
+        marker=dict(size=14, symbol='diamond', line=dict(width=2, color='white')),
+        hovertemplate='Threshold: %{x} polls<br>Gap: %{y:.1f} hours<extra></extra>',
+        fill='tozeroy',
+        fillcolor='rgba(155, 89, 182, 0.1)'
     ))
     
     # Sample size context
@@ -308,7 +319,7 @@ def sensitivity_proof(sensitivity_df: pd.DataFrame) -> go.Figure:
         y=sensitivity_df['n_games'] / 1000,
         mode='lines',
         name='Sample Size (thousands)',
-        line=dict(color='gray', width=2, dash='dot'),
+        line=dict(color=PALETTE['verified'], width=3, dash='dot'),
         yaxis='y2',
         hovertemplate='Threshold: %{x} polls<br>Games: %{y:.1f}k<extra></extra>'
     ))
@@ -342,17 +353,22 @@ def confidence_crisis_histogram(df: pd.DataFrame) -> go.Figure:
     fig.add_trace(go.Histogram(
         x=df['main_story_polled'],
         nbinsx=60,
-        marker=dict(color=PALETTE['uncertain'], opacity=0.8, line=dict(width=0)),
+        marker=dict(
+            color=df['main_story_polled'],
+            colorscale=[[0, PALETTE['uncertain']], [0.5, PALETTE['false_epic']], [1, PALETTE['earned']]],
+            opacity=0.85,
+            line=dict(width=1, color='white')
+        ),
         hovertemplate='Polls: %{x}<br>Games: %{y}<extra></extra>'
     ))
     
     # Critical thresholds
-    for thresh, label, color in [(10, '10 polls', PALETTE['accent']), 
-                                   (50, '50 polls', PALETTE['verified'])]:
+    for thresh, label, color in [(10, '10 polls', '#D32F2F'), 
+                                   (50, '50 polls', PALETTE['earned'])]:
         fig.add_vline(
-            x=thresh, line_dash="dash", line_color=color, line_width=3,
+            x=thresh, line_dash="dash", line_color=color, line_width=4,
             annotation_text=label, annotation_position="top right",
-            annotation_font=dict(size=12, color=color, family="Inter")
+            annotation_font=dict(size=13, color=color, family="Inter", weight=600)
         )
     
     fig.update_layout(
@@ -417,8 +433,8 @@ def hidden_gems_cluster_3d(df: pd.DataFrame, sample_size: int = 5000) -> go.Figu
                 marker=dict(
                     size=np.sqrt(zone_data['main_story_polled']) * 0.5,
                     color=zone_color,
-                    opacity=0.7,
-                    line=dict(width=0.5, color='white')
+                    opacity=0.8,
+                    line=dict(width=1, color='white')
                 ),
                 text=zone_data['name'],
                 customdata=zone_data[['main_story_polled', 'primary_genre', 'misrep_risk']],
