@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
 import pandas as pd
+from scipy.ndimage import gaussian_filter
 
 # Professional vibrant palette
 PALETTE = {
@@ -19,6 +20,58 @@ PALETTE = {
     'gradient_start': '#667EEA',
     'gradient_end': '#F093FB'
 }
+
+def topographic_density_map(df: pd.DataFrame, sample_size: int = 10000) -> go.Figure:
+    """Topographic contour map showing game density across time-confidence space"""
+    sample = df.sample(min(sample_size, len(df)), random_state=42)
+    
+    # Create 2D histogram for density
+    x_bins = np.linspace(0, sample['time_cost'].quantile(0.95), 50)
+    y_bins = np.linspace(0, sample['confidence_score'].quantile(0.95), 50)
+    
+    hist, x_edges, y_edges = np.histogram2d(
+        sample['time_cost'], 
+        sample['confidence_score'],
+        bins=[x_bins, y_bins]
+    )
+    
+    # Smooth the histogram for better contours
+    hist_smooth = gaussian_filter(hist.T, sigma=1.5)
+    
+    fig = go.Figure()
+    
+    # Add contour map
+    fig.add_trace(go.Contour(
+        x=x_edges[:-1],
+        y=y_edges[:-1],
+        z=hist_smooth,
+        colorscale='Viridis',
+        contours=dict(
+            coloring='heatmap',
+            showlabels=True,
+            labelfont=dict(size=10, color='white')
+        ),
+        colorbar=dict(
+            title=dict(text='Game<br>Density', side='right'),
+            tickmode='linear',
+            tick0=0,
+            dtick=hist_smooth.max()/5
+        ),
+        hovertemplate='Time: %{x:.1f}h<br>Confidence: %{y:.2f}<br>Density: %{z:.0f}<extra></extra>'
+    ))
+    
+    fig.update_layout(
+        title='Topographic Density Map: Where Games Cluster',
+        xaxis_title='Completion Time (hours)',
+        yaxis_title='Confidence Score',
+        template='plotly_dark',
+        height=600,
+        font=dict(family='Inter, sans-serif', size=12),
+        plot_bgcolor='#0A0E27',
+        paper_bgcolor='#0A0E27'
+    )
+    
+    return fig
 
 def trust_time_landscape(df: pd.DataFrame, sample_size: int = 8000) -> go.Figure:
     """
@@ -223,7 +276,7 @@ def trs_leaderboard(top_df: pd.DataFrame, bottom_df: pd.DataFrame) -> go.Figure:
     """
     fig = make_subplots(
         rows=1, cols=2,
-        subplot_titles=("🏆 Most Respectful Games", "⚠️ Biggest Time Wasters"),
+        subplot_titles=("Most Respectful Games", "Biggest Time Wasters"),
         horizontal_spacing=0.15
     )
     
@@ -384,6 +437,55 @@ def confidence_crisis_histogram(df: pd.DataFrame) -> go.Figure:
         showlegend=False,
         xaxis=dict(range=[0, 300], gridcolor='rgba(0,0,0,0.05)'),
         yaxis=dict(gridcolor='rgba(0,0,0,0.05)')
+    )
+    
+    return fig
+
+def zone_distribution_pie(df: pd.DataFrame) -> go.Figure:
+    """Pie chart showing distribution of games across trust-time zones"""
+    zone_counts = df['zone'].value_counts().sort_values(ascending=False)
+    
+    colors = {
+        'Earned Time': PALETTE['earned'],
+        'Verified Epic': PALETTE['verified'],
+        'Uncertain Grind': PALETTE['uncertain'],
+        'False Epic': PALETTE['false_epic'],
+        'Unknown': '#95A5A6'
+    }
+    
+    fig = go.Figure(data=[go.Pie(
+        labels=zone_counts.index,
+        values=zone_counts.values,
+        marker=dict(
+            colors=[colors.get(z, '#95A5A6') for z in zone_counts.index],
+            line=dict(color='white', width=3)
+        ),
+        textinfo='label+percent',
+        textfont=dict(size=15, family="Inter", weight=700),
+        textposition='auto',
+        hole=0.4,
+        pull=[0.05 if z == 'Earned Time' else 0 for z in zone_counts.index],
+        hovertemplate='<b>%{label}</b><br>Games: %{value:,}<br>Share: %{percent}<extra></extra>'
+    )])
+    
+    fig.update_layout(
+        title=dict(
+            text="<b>Zone Distribution</b><br><sub>How games split across trust-time zones</sub>",
+            font=dict(size=24, color=PALETTE['text'], family="Inter")
+        ),
+        height=550,
+        font=dict(size=13, family="Inter"),
+        showlegend=True,
+        legend=dict(
+            orientation="v",
+            yanchor="middle",
+            y=0.5,
+            xanchor="left",
+            x=1.05,
+            font=dict(size=13, family="Inter")
+        ),
+        plot_bgcolor='white',
+        paper_bgcolor='white'
     )
     
     return fig

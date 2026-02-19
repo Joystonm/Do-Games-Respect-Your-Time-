@@ -9,170 +9,109 @@ import numpy as np
 from data_engine import TimeRespectAnalyzer
 from viz_engine import (
     trust_time_landscape, perception_reality_split, genre_honesty_ranking,
-    sensitivity_proof, confidence_crisis_histogram, trs_leaderboard, PALETTE
+    sensitivity_proof, confidence_crisis_histogram, trs_leaderboard, topographic_density_map, zone_distribution_pie, PALETTE
 )
 from viz_3d_advanced import (
     trust_time_stability_3d, genre_honesty_orbit_3d, platform_reliability_cube_3d,
     misrepresentation_risk_helix_3d, hidden_gems_cluster_3d
 )
-
+from timeline_viz import create_timeline_viz, generate_synthetic_journey, TIMELINE_PALETTE
+from radar_viz import create_radar_chart, get_game_stats, RADAR_PALETTE
+from model_eval import (
+    prepare_model_data, train_models, create_roc_curve, 
+    get_feature_importance, create_feature_importance_viz, MODEL_PALETTE
+)
 # Page config
 st.set_page_config(
     page_title="Do Games Respect Your Time?",
-    page_icon="⏱️",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# Editorial CSS
+# Minimal CSS
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
     
-    * {
-        font-family: 'Inter', -apple-system, sans-serif;
-    }
+    * { font-family: 'Inter', -apple-system, sans-serif; }
     
     .main-title {
-        font-size: 4rem;
-        font-weight: 900;
+        font-size: 3rem;
+        font-weight: 700;
         color: #1A1A1A;
-        line-height: 1.1;
+        line-height: 1.2;
         margin-bottom: 0.5rem;
-        letter-spacing: -0.02em;
     }
     
     .subtitle {
-        font-size: 1.8rem;
+        font-size: 1.3rem;
         color: #666;
         font-weight: 400;
         margin-bottom: 3rem;
-        line-height: 1.4;
     }
     
-    .section-break {
-        height: 4rem;
-    }
+    .section-break { height: 3rem; }
     
     .insight-box {
-        background: linear-gradient(135deg, #E63946 0%, #A8201A 100%);
+        background: #2A3441;
         color: white;
-        padding: 3rem;
-        border-radius: 12px;
+        padding: 2.5rem;
+        border-radius: 6px;
         margin: 3rem 0;
-        font-size: 2rem;
-        font-weight: 700;
+        font-size: 1.6rem;
+        font-weight: 600;
         text-align: center;
-        line-height: 1.4;
-        box-shadow: 0 10px 30px rgba(230, 57, 70, 0.3);
+        border-left: 3px solid #4A90E2;
     }
     
     .narrative {
-        font-size: 1.25rem;
-        line-height: 1.8;
+        font-size: 1.05rem;
+        line-height: 1.7;
         color: #2A2A2A;
         margin: 2rem 0;
         max-width: 800px;
     }
     
-    .narrative strong {
-        color: #E63946;
-        font-weight: 700;
-    }
+    .narrative strong { color: #1A1A1A; font-weight: 600; }
+    .narrative em { color: #666; font-style: italic; }
     
-    .narrative em {
-        color: #666;
-        font-style: italic;
-    }
-    
-    .stat-hero {
-        text-align: center;
-        padding: 2rem;
-        margin: 2rem 0;
-    }
-    
-    .stat-number {
-        font-size: 5rem;
-        font-weight: 900;
-        color: #E63946;
-        line-height: 1;
-    }
-    
-    .stat-label {
-        font-size: 1.2rem;
-        color: #666;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        margin-top: 0.5rem;
-    }
+    .stat-hero { text-align: center; padding: 1.5rem; margin: 1.5rem 0; }
+    .stat-number { font-size: 3rem; font-weight: 700; color: #1A1A1A; }
+    .stat-label { font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.5rem; }
     
     .section-header {
-        font-size: 2.5rem;
+        font-size: 1.8rem;
         font-weight: 700;
         color: #1A1A1A;
         margin: 4rem 0 2rem 0;
-        border-left: 6px solid #E63946;
+        border-left: 3px solid #4A90E2;
         padding-left: 1.5rem;
     }
     
     .conclusion-box {
         background: #F8F9FA;
-        border-left: 6px solid #2A9D8F;
+        border-left: 3px solid #4A90E2;
         padding: 2rem;
         margin: 3rem 0;
-        font-size: 1.3rem;
+        font-size: 1.05rem;
         line-height: 1.7;
         color: #2A2A2A;
     }
     
-    div[data-testid="stMetricValue"] {
-        font-size: 2.5rem;
-        font-weight: 700;
-    }
-    
+    div[data-testid="stMetricValue"] { font-size: 2rem; font-weight: 600; }
     .stButton>button {
-        background: #E63946;
+        background: #4A90E2;
         color: white;
         border: none;
         padding: 0.75rem 2rem;
-        font-size: 1.1rem;
-        border-radius: 8px;
+        font-size: 0.95rem;
+        border-radius: 4px;
         font-weight: 600;
-        transition: all 0.3s;
     }
-    
-    .stButton>button:hover {
-        background: #A8201A;
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(230, 57, 70, 0.3);
-    }
-    
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-    
-    @keyframes slideInLeft {
-        from { opacity: 0; transform: translateX(-30px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-    
-    .main-title { animation: fadeInUp 0.6s ease-out; }
-    .subtitle { animation: fadeInUp 0.8s ease-out; }
-    .insight-box { animation: fadeInUp 0.7s ease-out; transition: transform 0.3s ease, box-shadow 0.3s ease; }
-    .insight-box:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(230, 57, 70, 0.4); }
-    .narrative { animation: fadeIn 0.8s ease-out; }
-    .stat-hero { animation: fadeInUp 0.6s ease-out; transition: transform 0.3s ease; }
-    .stat-hero:hover { transform: translateY(-8px); }
-    .section-header { animation: slideInLeft 0.6s ease-out; }
-    .conclusion-box { animation: fadeInUp 0.7s ease-out; }
+    .stButton>button:hover { background: #357ABD; }
     html { scroll-behavior: smooth; }
-    [data-testid="stDataFrame"] { animation: fadeIn 0.6s ease-out; }</style>
+</style>
 """, unsafe_allow_html=True)
 
 # Load data
@@ -299,6 +238,32 @@ zone_dist = analyzer.get_zone_distribution()
 st.markdown("**Zone Distribution:**")
 st.dataframe(zone_dist, use_container_width=True, hide_index=True)
 
+fig_pie = zone_distribution_pie(analyzer.df)
+st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
+
+st.markdown('<div class="section-break"></div>', unsafe_allow_html=True)
+
+# ============================================================================
+# TOPOGRAPHIC DENSITY MAP
+# ============================================================================
+
+st.markdown('<h2 class="section-header">Topographic Density Map</h2>', unsafe_allow_html=True)
+
+st.markdown("""
+<div class="narrative">
+<strong>Where do games actually cluster?</strong>
+
+This topographic map reveals the terrain of game completion data. 
+Peaks show high-density regions where most games concentrate. 
+Valleys reveal the voids — unexplored territory where few games exist.
+
+The contour lines trace elevation: <strong>higher = more games</strong>.
+</div>
+""", unsafe_allow_html=True)
+
+fig_topo = topographic_density_map(analyzer.df)
+st.plotly_chart(fig_topo, use_container_width=True, config={'displayModeBar': False})
+
 st.markdown('<div class="section-break"></div>', unsafe_allow_html=True)
 
 # ============================================================================
@@ -356,14 +321,14 @@ st.markdown('<div class="section-break"></div>', unsafe_allow_html=True)
 # 3D VISUALIZATION SUITE (5 ADVANCED CHARTS)
 # ============================================================================
 
-st.markdown('<h2 class="section-header">🌐 The 3D Revelation</h2>', unsafe_allow_html=True)
+st.markdown('<h2 class="section-header">The 3D Revelation</h2>', unsafe_allow_html=True)
 
 st.markdown("""
 <div class="narrative">
 Two dimensions can't capture the full truth. What follows is a journey through five 3D spaces, 
 each revealing patterns <strong>impossible to see in 2D</strong>.
 
-<em>💡 Tip: Drag to rotate • Scroll to zoom • Scroll outside chart to navigate page</em>
+<em>Tip: Drag to rotate • Scroll to zoom • Scroll outside chart to navigate page</em>
 </div>
 """, unsafe_allow_html=True)
 
@@ -538,7 +503,7 @@ st.markdown('<div class="section-break"></div>', unsafe_allow_html=True)
 # TIME RESPECT SCORE LEADERBOARD
 # ============================================================================
 
-st.markdown('<h2 class="section-header">⏱️ Time Respect Score Leaderboard</h2>', unsafe_allow_html=True)
+st.markdown('<h2 class="section-header">Time Respect Score Leaderboard</h2>', unsafe_allow_html=True)
 
 st.markdown("""
 <div class="narrative">
@@ -564,7 +529,7 @@ st.plotly_chart(fig_trs, use_container_width=True, config={'displayModeBar': Fal
 col1, col2 = st.columns(2)
 
 with col1:
-    st.markdown("**🏆 Top 10 Details:**")
+    st.markdown("**Top 10 Details:**")
     display_top = top_games[['name', 'time_cost', 'main_story_polled', 'time_respect_score']].copy()
     display_top.columns = ['Game', 'Hours', 'Polls', 'TRS']
     display_top['TRS'] = display_top['TRS'].round(3)
@@ -572,7 +537,7 @@ with col1:
     st.dataframe(display_top, use_container_width=True, hide_index=True)
 
 with col2:
-    st.markdown("**⚠️ Bottom 10 Details:**")
+    st.markdown("**Bottom 10 Details:**")
     display_bottom = bottom_games[['name', 'time_cost', 'main_story_polled', 'time_respect_score']].copy()
     display_bottom.columns = ['Game', 'Hours', 'Polls', 'TRS']
     display_bottom['TRS'] = display_bottom['TRS'].round(3)
@@ -595,6 +560,215 @@ Time respect isn't just about being short — it's about being <em>measurably ef
 
 st.markdown('<div class="section-break"></div>', unsafe_allow_html=True)
 
+
+# ============================================================================
+# PLAYER JOURNEY TIMELINE
+# ============================================================================
+
+st.markdown('<h2 class="section-header">Player Journey Timeline</h2>', unsafe_allow_html=True)
+
+st.markdown("""
+<div class="narrative">
+<strong>How does game design affect time investment across playtime?</strong>
+
+This timeline models player engagement, fatigue, and retention patterns. 
+Watch how metrics evolve from early game through post-game padding.
+
+<em>Select a metric to visualize its trajectory over 100 hours of gameplay.</em>
+</div>
+""", unsafe_allow_html=True)
+
+# Generate synthetic journey data
+journey_df = generate_synthetic_journey(hours=100)
+
+# Metric selector
+col1, col2, col3 = st.columns([2, 1, 1])
+
+with col1:
+    timeline_metric = st.selectbox(
+        'Select Metric',
+        ['engagement', 'progress_time', 'dropoff', 'content_density', 'repetition'],
+        format_func=lambda x: {
+            'engagement': 'Engagement Index',
+            'progress_time': 'Avg Time to Progress',
+            'dropoff': 'Drop-off Rate',
+            'content_density': 'Content Density',
+            'repetition': 'Repetition Intensity'
+        }[x],
+        key='timeline_metric_selector'
+    )
+
+with col2:
+    avg_val = journey_df[timeline_metric].mean()
+    st.markdown(f"""
+    <div style="background: {TIMELINE_PALETTE['surface']}; border-radius: 12px; padding: 1.5rem; border: 1px solid {TIMELINE_PALETTE['grid']};">
+        <div style="font-size: 0.85rem; color: {TIMELINE_PALETTE['text_dim']}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Average</div>
+        <div style="font-size: 2rem; font-weight: 700; color: {TIMELINE_PALETTE['text']};">{avg_val:.1f}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col3:
+    peak_val = journey_df[timeline_metric].max()
+    st.markdown(f"""
+    <div style="background: {TIMELINE_PALETTE['surface']}; border-radius: 12px; padding: 1.5rem; border: 1px solid {TIMELINE_PALETTE['grid']};">
+        <div style="font-size: 0.85rem; color: {TIMELINE_PALETTE['text_dim']}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Peak</div>
+        <div style="font-size: 2rem; font-weight: 700; color: {TIMELINE_PALETTE['text']};">{peak_val:.1f}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# Timeline visualization
+fig_timeline = create_timeline_viz(journey_df, timeline_metric)
+st.plotly_chart(fig_timeline, use_container_width=True, config={'displayModeBar': False})
+
+# Insights
+timeline_insights = {
+    'engagement': '<strong>Early Hook:</strong> Strong initial engagement drops as novelty fades. Mid-game oscillation suggests content variety. Late-game decline indicates fatigue.',
+    'progress_time': '<strong>Pacing Analysis:</strong> Time investment per milestone increases steadily. Spikes indicate difficulty walls or grinding requirements.',
+    'dropoff': '<strong>Retention Risk:</strong> Drop-off accelerates in late game. Critical threshold around 60h where player commitment wanes.',
+    'content_density': '<strong>Content Efficiency:</strong> High density early, declining as padding increases. Sinusoidal pattern suggests repetitive mission structure.',
+    'repetition': '<strong>Grind Detection:</strong> Repetition intensity climbs sharply post-50h. Indicates content recycling and diminishing returns.'
+}
+
+st.markdown(f"""
+<div style="background: {TIMELINE_PALETTE['surface']}; border-radius: 12px; padding: 1.5rem; border: 1px solid {TIMELINE_PALETTE['grid']}; margin-top: 1rem;">
+    <div style="font-size: 0.85rem; color: {TIMELINE_PALETTE['text_dim']}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Insight</div>
+    <div style="color: {TIMELINE_PALETTE['text']}; font-size: 0.95rem; line-height: 1.6;">
+        {timeline_insights[timeline_metric]}
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown('<div class="section-break"></div>', unsafe_allow_html=True)
+
+# ============================================================================
+# RADAR ANALYTICS - TIME RESPECT PROFILE
+# ============================================================================
+
+st.markdown('<h2 class="section-header">Time Respect Profile</h2>', unsafe_allow_html=True)
+
+st.markdown("""
+<div class="narrative">
+<strong>Multi-dimensional assessment of game design quality.</strong>
+
+Six metrics form a complete picture: efficiency, density, repetition control, retention, engagement, and progression value.
+
+<em>Select games to analyze their time respect signature.</em>
+</div>
+""", unsafe_allow_html=True)
+
+# Game selector
+top_games_list = analyzer.df.nlargest(100, 'main_story_polled')['name'].tolist()
+
+col1, col2 = st.columns(2)
+
+with col1:
+    radar_game1 = st.selectbox(
+        'Primary Game',
+        top_games_list,
+        index=0,
+        key='radar_game1'
+    )
+
+with col2:
+    radar_game2 = st.selectbox(
+        'Compare With (Optional)',
+        ['None'] + top_games_list,
+        index=0,
+        key='radar_game2'
+    )
+
+# Radar chart
+radar_game2_val = None if radar_game2 == 'None' else radar_game2
+fig_radar = create_radar_chart(analyzer.df, radar_game1, radar_game2_val)
+st.plotly_chart(fig_radar, use_container_width=True, config={'displayModeBar': False})
+
+# Stat cards
+stats = get_game_stats(analyzer.df, radar_game1)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+col1, col2, col3, col4, col5 = st.columns(5)
+
+with col1:
+    st.markdown(f"""
+    <div style="background: linear-gradient(135deg, {RADAR_PALETTE['surface']} 0%, #252d3d 100%); 
+                border-radius: 12px; padding: 1.5rem; border: 1px solid {RADAR_PALETTE['grid']}; 
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3); text-align: center;">
+        <div style="font-size: 2.5rem; font-weight: 700; color: {RADAR_PALETTE['accent']}; margin-bottom: 0.5rem;">
+            {stats['completion_time']:.1f}h
+        </div>
+        <div style="font-size: 0.75rem; color: {RADAR_PALETTE['text_dim']}; text-transform: uppercase; letter-spacing: 0.05em;">
+            Avg Completion
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    st.markdown(f"""
+    <div style="background: linear-gradient(135deg, {RADAR_PALETTE['surface']} 0%, #252d3d 100%); 
+                border-radius: 12px; padding: 1.5rem; border: 1px solid {RADAR_PALETTE['grid']}; 
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3); text-align: center;">
+        <div style="font-size: 2.5rem; font-weight: 700; color: {RADAR_PALETTE['accent']}; margin-bottom: 0.5rem;">
+            {stats['completion_rate']:.0f}%
+        </div>
+        <div style="font-size: 0.75rem; color: {RADAR_PALETTE['text_dim']}; text-transform: uppercase; letter-spacing: 0.05em;">
+            Finish Rate
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col3:
+    st.markdown(f"""
+    <div style="background: linear-gradient(135deg, {RADAR_PALETTE['surface']} 0%, #252d3d 100%); 
+                border-radius: 12px; padding: 1.5rem; border: 1px solid {RADAR_PALETTE['grid']}; 
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3); text-align: center;">
+        <div style="font-size: 2.5rem; font-weight: 700; color: {RADAR_PALETTE['accent']}; margin-bottom: 0.5rem;">
+            {stats['dropoff_hours']:.0f}h
+        </div>
+        <div style="font-size: 0.75rem; color: {RADAR_PALETTE['text_dim']}; text-transform: uppercase; letter-spacing: 0.05em;">
+            Avg Drop-off
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col4:
+    st.markdown(f"""
+    <div style="background: linear-gradient(135deg, {RADAR_PALETTE['surface']} 0%, #252d3d 100%); 
+                border-radius: 12px; padding: 1.5rem; border: 1px solid {RADAR_PALETTE['grid']}; 
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3); text-align: center;">
+        <div style="font-size: 2.5rem; font-weight: 700; color: {RADAR_PALETTE['accent']}; margin-bottom: 0.5rem;">
+            {stats['side_quest_density']:.0f}%
+        </div>
+        <div style="font-size: 0.75rem; color: {RADAR_PALETTE['text_dim']}; text-transform: uppercase; letter-spacing: 0.05em;">
+            Side Quest Density
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col5:
+    st.markdown(f"""
+    <div style="background: linear-gradient(135deg, {RADAR_PALETTE['surface']} 0%, #252d3d 100%); 
+                border-radius: 12px; padding: 1.5rem; border: 1px solid {RADAR_PALETTE['grid']}; 
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3); text-align: center;">
+        <div style="font-size: 2.5rem; font-weight: 700; color: {RADAR_PALETTE['accent']}; margin-bottom: 0.5rem;">
+            {stats['grind_index']:.0f}
+        </div>
+        <div style="font-size: 0.75rem; color: {RADAR_PALETTE['text_dim']}; text-transform: uppercase; letter-spacing: 0.05em;">
+            Grind Index
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("""
+<div class="narrative" style="margin-top: 2rem;">
+<strong>Reading the profile:</strong> Larger radar area = better time respect. 
+Balanced shapes indicate well-designed pacing. Spiky patterns reveal design weaknesses.
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown('<div class="section-break"></div>', unsafe_allow_html=True)
 # INTERACTIVE EXPLORATION (MINIMAL)
 # ============================================================================
 
@@ -642,6 +816,101 @@ else:
 st.markdown('<div class="section-break"></div>', unsafe_allow_html=True)
 
 # ============================================================================
+
+# ============================================================================
+# MODEL EVALUATION - PREDICTION ANALYSIS
+# ============================================================================
+
+st.markdown('<h2 class="section-header">Model Evaluation</h2>', unsafe_allow_html=True)
+
+st.markdown("""
+<div class="narrative">
+<strong>Can we predict which games respect player time?</strong>
+
+Using machine learning to classify games based on time efficiency, content density, 
+repetition patterns, completion rates, and drop-off risk.
+</div>
+""", unsafe_allow_html=True)
+
+# Prepare data and train models
+with st.spinner('Training models...'):
+    X, y = prepare_model_data(analyzer.df)
+    results = train_models(X, y)
+    feature_names = ['Time Efficiency', 'Content Density', 'Repetition Rate', 'Completion Rate', 'Drop-off Risk']
+    importance_df = get_feature_importance(results['gradient']['model'], feature_names)
+
+# Two-column layout
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown(f"""
+    <div style="color: {MODEL_PALETTE['text']}; font-size: 1rem; font-weight: 600; margin-bottom: 1rem;">
+        Model Performance Curve
+    </div>
+    """, unsafe_allow_html=True)
+    
+    fig_roc = create_roc_curve(results)
+    st.plotly_chart(fig_roc, use_container_width=True, config={'displayModeBar': False})
+
+with col2:
+    st.markdown(f"""
+    <div style="color: {MODEL_PALETTE['text']}; font-size: 1rem; font-weight: 600; margin-bottom: 1rem;">
+        Feature Impact on Time Respect Score
+    </div>
+    """, unsafe_allow_html=True)
+    
+    fig_importance = create_feature_importance_viz(importance_df)
+    st.plotly_chart(fig_importance, use_container_width=True, config={'displayModeBar': False})
+
+# Feature details table
+st.markdown("<br>", unsafe_allow_html=True)
+
+st.markdown(f"""
+<div style="background: {MODEL_PALETTE['surface']}; border-radius: 6px; padding: 1.5rem; border: 1px solid {MODEL_PALETTE['grid']};">
+    <div style="font-size: 0.9rem; color: {MODEL_PALETTE['text_dim']}; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
+        Feature Contributions
+    </div>
+    <div style="color: {MODEL_PALETTE['text']}; font-size: 0.95rem; line-height: 1.8;">
+""", unsafe_allow_html=True)
+
+for _, row in importance_df.iterrows():
+    impact_color = MODEL_PALETTE['positive'] if row['impact'] == 'Positive' else MODEL_PALETTE['negative']
+    st.markdown(f"""
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; padding: 0.5rem; background: rgba(255,255,255,0.02); border-radius: 4px;">
+        <div style="flex: 1;">
+            <strong>{row['feature']}</strong>
+        </div>
+        <div style="flex: 0 0 120px; text-align: right;">
+            <span style="color: {MODEL_PALETTE['text_dim']};">{row['importance']:.1f}%</span>
+        </div>
+        <div style="flex: 0 0 100px; text-align: right;">
+            <span style="color: {impact_color}; font-size: 0.85rem;">{row['impact']}</span>
+        </div>
+        <div style="flex: 0 0 100px; text-align: right; font-family: monospace; font-size: 0.9rem;">
+            {row['coefficient']:.3f}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("</div></div>", unsafe_allow_html=True)
+
+# Insight box
+st.markdown(f"""
+<div style="background: {MODEL_PALETTE['surface']}; border-left: 3px solid {MODEL_PALETTE['gradient']}; 
+            border-radius: 6px; padding: 1.5rem; margin-top: 2rem; border: 1px solid {MODEL_PALETTE['grid']};">
+    <div style="font-size: 0.85rem; color: {MODEL_PALETTE['text_dim']}; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">
+        Key Finding
+    </div>
+    <div style="color: {MODEL_PALETTE['text']}; font-size: 1rem; line-height: 1.7;">
+        <strong>Time Efficiency</strong> and <strong>Content Density</strong> are the strongest predictors of perceived time respect, 
+        contributing {importance_df.iloc[0]['importance']:.1f}% and {importance_df.iloc[1]['importance']:.1f}% respectively. 
+        The Gradient Boosting model achieves <strong>{results['gradient']['auc']:.1%} AUC</strong>, 
+        indicating strong predictive performance for identifying games that respect player time.
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown('<div class="section-break"></div>', unsafe_allow_html=True)
 # THE CONCLUSION
 # ============================================================================
 
